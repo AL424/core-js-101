@@ -118,33 +118,103 @@ function fromJSON(proto, json) {
  *  For more examples see unit tests.
  */
 
+class CssSelectorBuilder {
+  constructor(value = '') {
+    this.value = value;
+    this.order = [
+      '#',
+      '.',
+      '[',
+      ':',
+      '::',
+    ];
+    this.errorOrder = 'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element';
+    this.errorInclusion = 'Element, id and pseudo-element should not occur more then one time inside the selector';
+  }
+
+  element(value) {
+    if (this.order.some((item) => this.value.includes(item))) {
+      throw new Error(this.errorOrder);
+    }
+    if (this.value) throw new Error(this.errorInclusion);
+    this.value += value;
+    return new CssSelectorBuilder(this.value);
+  }
+
+  id(value) {
+    if (this.value.includes('#')) throw new Error(this.errorInclusion);
+    if (this.order.slice(1).some((item) => this.value.includes(item))) {
+      throw new Error(this.errorOrder);
+    }
+    this.value += `#${value}`;
+    return new CssSelectorBuilder(this.value);
+  }
+
+  class(value) {
+    if (this.order.slice(2).some((item) => this.value.includes(item))) {
+      throw new Error(this.errorOrder);
+    }
+    this.value += `.${value}`;
+    return new CssSelectorBuilder(this.value);
+  }
+
+  attr(value) {
+    if (this.order.slice(3).some((item) => this.value.includes(item))) {
+      throw new Error(this.errorOrder);
+    }
+    this.value += `[${value}]`;
+    return new CssSelectorBuilder(this.value);
+  }
+
+  pseudoClass(value) {
+    if (this.order.slice(4).some((item) => this.value.includes(item))) {
+      throw new Error(this.errorOrder);
+    }
+    this.value += `:${value}`;
+    return new CssSelectorBuilder(this.value);
+  }
+
+  pseudoElement(value) {
+    if (this.value.includes('::')) throw new Error(this.errorInclusion);
+    this.value += `::${value}`;
+    return new CssSelectorBuilder(this.value);
+  }
+
+  stringify() {
+    return this.value;
+  }
+}
+
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    return new CssSelectorBuilder().element(value);
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return new CssSelectorBuilder().id(value);
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return new CssSelectorBuilder().class(value);
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return new CssSelectorBuilder().attr(value);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return new CssSelectorBuilder().pseudoClass(value);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    return new CssSelectorBuilder().pseudoElement(value);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    const str1 = selector1.stringify();
+    const str2 = selector2.stringify();
+    const value = `${str1} ${combinator} ${str2}`;
+    return new CssSelectorBuilder(value);
   },
 };
 
